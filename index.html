@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contabilidad Administrativa Interactiva</title>
+    
+    <style>
+        /* === CONFIGURACIÓN GLOBAL Y COLORES === */
+        :root {
+            --umg-green: #2E8B57; /* Verde oscuro principal */
+            --light-green-bg: #e6f7ee; /* Fondo suave */
+            --dark-text: #333333;
+            --white: #FFFFFF;
+            --accent-lime: #8BC34A; /* Acendo verde lima */
+            --dark-gray-nav: #4a4a4a;
+            --border-color: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            background-color: var(--light-green-bg);
+            color: var(--dark-text);
+        }
+
+        /* === MODAL DE BIENVENIDA (NUEVO) === */
+        .welcome-modal-overlay {
+            position: fixed; /* Ocupa toda la pantalla */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Fondo oscuro semitransparente */
+            z-index: 1000;
+            display: none; /* Oculto por defecto */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .welcome-modal-content {
+            background-color: var(--white);
+            padding: 2.5rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            /* Animación de entrada */
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: all 0.3s ease-out;
+        }
+
+        .welcome-modal-content h2 {
+            color: var(--umg-green);
+            margin-bottom: 1rem;
+        }
+
+        .welcome-modal-content p {
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        
+        .modal-button {
+            background-color: var(--umg-green);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+        .modal-button:hover {
+            background-color: #256e45;
+        }
+        
+        /* Cuando el modal está activo */
+        .welcome-modal-overlay.active {
+            display: flex;
+        }
+        .welcome-modal-overlay.active .welcome-modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+
+        /* === ENCABEZADO === */
+        header {
+            background-color: var(--umg-green);
+            color: var(--white);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            border-bottom: 5px solid var(--accent-lime);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+        }
+
+        /* === CONTENEDOR INTERACTIVO === */
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .interactive-wrapper {
+            display: flex;
+            gap: 2rem;
+        }
+
+        /* --- Columna Izquierda: Navegación de Títulos --- */
+        .interactive-nav {
+            flex: 1;
+        }
+
+        .interactive-nav ul {
+            list-style: none;
+            position: sticky;
+            top: 2rem;
+        }
+
+        .interactive-nav .tab-link {
+            display: block;
+            padding: 1.25rem 1.5rem;
+            text-decoration: none;
+            color: var(--dark-text);
+            background-color: var(--white);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-weight: bold;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .interactive-nav .tab-link:hover {
+            border-color: var(--umg-green);
+            transform: translateX(5px);
+        }
+
+        .interactive-nav .tab-link.active {
+            background-color: var(--umg-green);
+            color: var(--white);
+            border-color: var(--accent-lime);
+            transform: translateX(5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* --- Columna Derecha: Contenido (Globo de Texto) --- */
+        .interactive-content {
+            flex: 2.5;
+        }
+
+        .content-bubble {
+            display: none;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            animation: slideIn 0.4s ease-out forwards;
+        }
+
+        .content-bubble-header {
+            background-color: var(--umg-green);
+            color: var(--white);
+            padding: 1.5rem 2rem;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .content-bubble-header h2 {
+            margin: 0;
+            color: var(--white);
+        }
+
+        .content-bubble-body {
+            padding: 2rem;
+        }
+        
+        .content-bubble.active {
+            display: block;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* === ESTILOS DE CONTENIDO INTERNO === */
+        h3 {
+            color: var(--umg-green);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light-green-bg);
+            padding-bottom: 5px;
+        }
+        
+        ul { padding-left: 1.5rem; margin-bottom: 1rem; }
+
+        .comparison-container { display: flex; gap: 1.5rem; margin-top: 1rem; }
+        .comparison-box { flex: 1; border: 1px solid var(--border-color); border-radius: 5px; padding: 1rem; background: #f8fff8; }
+        .comparison-box h4 { color: var(--umg-green); text-align: center; margin-bottom: 1rem; border-bottom: 2px solid var(--umg-green); padding-bottom: 0.5rem; }
+        .example-box { background-color: #f8fff8; border: 1px dashed var(--umg-green); border-radius: 5px; padding: 1rem; margin-top: 1rem; }
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+        .tool-card { border: 1px solid var(--border-color); border-radius: 8px; background: var(--white); box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .tool-card h4 { background-color: #f0fdf0; border-bottom: 1px solid #eee; color: var(--umg-green); padding: 1rem; border-radius: 8px 8px 0 0; }
+        .tool-card p, .tool-card .example-box { padding: 1rem; font-size: 0.95rem; flex-grow: 1; }
+        
+        /* --- Estilos para Calculadoras --- */
+        .calculator-card { grid-column: 1 / -1; background-color: var(--white); border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        .calculator-card h4 { background-color: #f0fdf0; color: var(--umg-green); padding: 1rem; border-bottom: 1px solid #eee; border-radius: 8px 8px 0 0; }
+        .calculator-body { padding: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .calc-input-group { display: flex; flex-direction: column; }
+        .calc-input-group label { font-weight: bold; margin-bottom: 0.25rem; font-size: 0.9rem; }
+        .calc-input-group input { padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 5px; font-size: 1rem; }
+        .calculator-footer { padding: 0 1.5rem 1.5rem 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+        .calc-button { background-color: var(--accent-lime); color: var(--dark-text); border: none; padding: 0.75rem 1.5rem; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background-color 0.3s ease; }
+        .calc-button:hover { background-color: #79a33d; }
+        .calculator-result { font-size: 1.25rem; font-weight: bold; }
+        .calculator-result .positive { color: var(--umg-green); }
+        .calculator-result .negative { color: #c00; }
+
+        /* === PIE DE PÁGINA === */
+        footer { text-align: center; padding: 2rem; margin-top: 2rem; background-color: var(--dark-gray-nav); color: var(--white); }
+
+        /* === ADAPTABILIDAD (DISEÑO RESPONSIVO) === */
+        @media (max-width: 768px) {
+            .interactive-wrapper { flex-direction: column; }
+            .interactive-nav ul { position: static; display: flex; overflow-x: auto; padding-bottom: 1rem; }
+            .interactive-nav .tab-link { flex-shrink: 0; margin-right: 0.5rem; }
+            .comparison-container { flex-direction: column; }
+            .calculator-body { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="welcome-modal-overlay active" id="welcome-modal">
+        <div class="welcome-modal-content">
+            <h2>¡Bienvenido!</h2>
+            <p>Estás por iniciar tu recorrido interactivo por los fundamentos de la Contabilidad Administrativa. Haz clic para comenzar.</p>
+            <button class="modal-button" id="close-modal-btn">¡Comenzar!</button>
+        </div>
+    </div>
+
+
+    <header>
+        <h1>Contabilidad Administrativa Interactiva</h1>
+        <p>Recurso Digital del Curso</p>
+    </header>
+
+    <main>
+        <div class="interactive-wrapper">
+
+            <nav class="interactive-nav">
+                <ul>
+                    <li><a class="tab-link active" data-target="fundamentos">I. Fundamentos Web</a></li>
+                    <li><a class="tab-link" data-target="teoria">II. Aspectos Teóricos</a></li>
+                    <li><a class="tab-link" data-target="herramientas">III. Herramientas Prácticas</a></li>
+                </ul>
+            </nav>
+
+            <div class="interactive-content">
+
+                <section id="fundamentos" class="content-bubble active">
+                    <div class="content-bubble-header">
+                        <h2>I. Fundamentos de Creación de la Página Web</h2>
+                    </div>
+                    <div class="content-bubble-body">
+                        <p>Esta página fue diseñada como un recurso académico centralizado, priorizando la claridad, la accesibilidad y una estructura lógica que facilite el aprendizaje. El diseño de pestañas permite al usuario enfocarse en una sola área de contenido a la vez, mientras que las herramientas interactivas (calculadoras) transforman la teoría en práctica.</p>
+                        <h3>Aspectos Fundamentales Considerados</h3>
+                        <ul>
+                            <li><strong>Inicio Interactivo:</strong> La página te recibe con un "modal" de bienvenida, requiriendo una acción para iniciar.</li>
+                            <li><strong>Diseño Interactivo:</strong> Se usa un sistema de pestañas (Tabs) con JavaScript para mostrar y ocultar contenido, creando una experiencia de "globo de texto" como en los videojuegos.</li>
+                            <li><strong>Interactividad Funcional:</strong> Se han añadido calculadoras con JavaScript que responden a la entrada del usuario, proporcionando valor práctico inmediato.</li>
+                            <li><strong>Adaptabilidad (Diseño Responsivo):</strong> El sitio se adapta a móviles. En pantallas pequeñas, los botones de navegación se vuelven un "scroll" horizontal y las calculadoras apilan sus campos verticalmente.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section id="teoria" class="content-bubble">
+                    <div class="content-bubble-header">
+                        <h2>II. Contabilidad Administrativa (Aspectos Teóricos)</h2>
+                    </div>
+                    <div class="content-bubble-body">
+                        <p>La <strong>Contabilidad Administrativa</strong> es un sistema de información diseñado para servir a las necesidades internas de la administración de una empresa. Su enfoque principal es facilitar la planeación, el control y la toma de decisiones gerenciales.</p>
+                        
+                        <h3>Diferenciación Clave</h3>
+                        <div class="comparison-container">
+                            <div class="comparison-box">
+                                <h4>C. Administrativa</h4>
+                                <ul><li>Usuario Interno (Gerentes)</li><li>Enfoque en el Futuro (Proyecciones)</li><li>No regulada</li><li>Flexible</li></ul>
+                            </div>
+                            <div class="comparison-box">
+                                <h4>C. Financiera</h4>
+                                <ul><li>Usuario Externo (Bancos, SAT)</li><li>Enfoque en el Pasado (Histórico)</li><li>Regulada (NIIF)</li><li>Rígida</li></ul>
+                            </div>
+                            <div class="comparison-box">
+                                <h4>C. de Costos</h4>
+                                <ul><li>Usuario Interno (Producción)</li><li>Enfoque en el Presente (Costeo)</li><li>Base para ambas</li><li>Detallada</li></ul>
+                            </div>
+                        </div>
+
+                        <h3>Ejemplo Práctico: El Dilema del Gerente</h3>
+                        <div class="example-box">
+                            <p><strong>Escenario:</strong> Un gerente quiere decidir si lanzar una nueva línea de botellas de agua.</p>
+                            <ul>
+                                <li>La <strong>Contabilidad Financiera</strong> le da el Estado de Resultados del año pasado. Le dice que la empresa "ganó Q. 500,000" en total. (Útil, pero no ayuda a decidir).</li>
+                                <li>La <strong>Contabilidad de Costos</strong> le dice: "Cada botella costará Q. 1.50 producirla (Q. 0.75 de plástico, Q. 0.50 de agua, Q. 0.25 de mano de obra)". (Muy útil, pero incompleto).</li>
+                                <li>La <strong>Contabilidad Administrativa</strong> toma el costo (Q. 1.50), prepara un presupuesto que incluye marketing y distribución (costos fijos y variables), analiza el punto de equilibrio y proyecta ventas. Concluye: "Si vendemos a Q. 5.00, necesitamos vender 10,000 unidades para cubrir costos. Proyectamos vender 30,000. El proyecto es rentable." (Esto SÍ permite tomar una decisión).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="herramientas" class="content-bubble">
+                    <div class="content-bubble-header">
+                        <h2>III. Herramientas de Gestión Práctica</h2>
+                    </div>
+                    <div class="content-bubble-body">
+                        <p>La Contabilidad Administrativa utiliza diversas herramientas analíticas para convertir datos en decisiones. Aquí exploramos algunas de forma interactiva.</p>
+
+                        <div class="calculator-card">
+                            <h4>Calculadora de Punto de Equilibrio (en Unidades)</h4>
+                            <div class="calculator-body">
+                                <div class="calc-input-group">
+                                    <label for="fijos">Costos Fijos Totales (Q.)</label>
+                                    <input type="number" id="fijos" placeholder="Ej: 50000">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label for="precio">Precio de Venta (por unidad) (Q.)</label>
+                                    <input type="number" id="precio" placeholder="Ej: 100">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label for="variable">Costo Variable (por unidad) (Q.)</label>
+                                    <input type="number" id="variable" placeholder="Ej: 60">
+                                </div>
+                            </div>
+                            <div class="calculator-footer">
+                                <button class="calc-button" id="btn-pe">Calcular PE</button>
+                                <div class="calculator-result">
+                                    <span id="resultado-pe">Necesitas vender...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="calculator-card">
+                            <h4>Calculadora de Valor Actual Neto (VAN)</h4>
+                            <div class="calculator-body">
+                                <div class="calc-input-group">
+                                    <label for="inversion">Inversión Inicial (Q.)</label>
+                                    <input type="number" id="inversion" placeholder="Ej: 100000">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label for="tasa">Tasa de Descuento (TMAR) (%)</label>
+                                    <input type="number" id="tasa" placeholder="Ej: 10">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label for="flujo1">Flujo Año 1 (Q.)</label>
+                                    <input type="number" id="flujo1" placeholder="Ej: 30000">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label for="flujo2">Flujo Año 2 (Q.)</label>
+                                    <input type="number" id="flujo2" placeholder="Ej: 30000">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label for="flujo3">Flujo Año 3 (Q.)</label>
+                                    <input type="number" id="flujo3" placeholder="Ej: 40000">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label for="flujo4">Flujo Año 4 (Q.)</label>
+                                    <input type="number" id="flujo4" placeholder="Ej: 40000">
+                                </div>
+                                <div class="calc-input-group">
+                                    <label for="flujo5">Flujo Año 5 (Q.)</label>
+                                    <input type="number" id="flujo5" placeholder="Ej: 50000">
+                                </div>
+                            </div>
+                            <div class="calculator-footer">
+                                <button class="calc-button" id="btn-van">Calcular VAN</button>
+                                <div class="calculator-result">
+                                    <span id="resultado-van">El VAN es...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3>Otras Herramientas Clave</h3>
+                        <div class="tools-grid">
+                            
+                            <div class="tool-card">
+                                <h4>Decisiones de Comprar o Producir</h4>
+                                <p>Análisis de costos relevantes (costos diferenciales) para determinar si es más rentable para la empresa fabricar un componente internamente o comprarlo a un proveedor externo.</p>
+                                <div class="example-box">
+                                    <strong>Ejemplo:</strong> Comprar una pieza cuesta Q.10. Producirla cuesta Q.8 en materiales (variable) pero requiere una máquina que suma Q.20,000 (fijo).
+                                    <br>
+                                    El punto de indiferencia es 10,000 unidades (Q.10 = Q.8 + Q.20,000/Q). Si necesitas más de 10,000, es mejor producir.
+                                </div>
+                            </div>
+
+                            <div class="tool-card">
+                                <h4>Tasa Interna de Retorno (TIR)</h4>
+                                <p>La TIR es la "prima hermana" del VAN. Es la tasa de descuento exacta que hace que el VAN de un proyecto sea igual a CERO. Representa la rentabilidad porcentual real del proyecto.</p>
+                                <div class="example-box">
+                                    <strong>Regla de decisión:</strong> Si la TIR (ej. 15%) es MAYOR que tu Tasa de Descuento (ej. 10%), el proyecto se aprueba.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Página Web Interactiva creada para el curso de Contabilidad Administrativa.</p>
+        <p>Universidad Mariano Gálvez de Guatemala.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // --- LÓGICA DEL MODAL DE BIENVENIDA (NUEVA) ---
+            const modal = document.getElementById('welcome-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            
+            // Muestra el modal al cargar la página
+            if (modal) {
+                modal.classList.add('active');
+            }
+            
+            // Cierra el modal al hacer clic en el botón
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', function() {
+                    modal.classList.remove('active');
+                });
+            }
+
+            // --- LÓGICA DE LAS PESTAÑAS (TABS) ---
+            const tabLinks = document.querySelectorAll('.tab-link');
+            const contentBubbles = document.querySelectorAll('.content-bubble');
+
+            tabLinks.forEach(function(link) {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault(); 
+                    const targetId = link.getAttribute('data-target');
+
+                    tabLinks.forEach(innerLink => innerLink.classList.remove('active'));
+                    contentBubbles.forEach(bubble => bubble.classList.remove('active'));
+
+                    link.classList.add('active');
+                    document.getElementById(targetId).classList.add('active');
+                });
+            });
+
+            // --- LÓGICA DE LA CALCULADORA DE PUNTO DE EQUILIBRIO ---
+            const btnPE = document.getElementById('btn-pe');
+            if (btnPE) {
+                btnPE.addEventListener('click', function() {
+                    const fijos = parseFloat(document.getElementById('fijos').value) || 0;
+                    const precio = parseFloat(document.getElementById('precio').value) || 0;
+                    const variable = parseFloat(document.getElementById('variable').value) || 0;
+                    const resultadoPE = document.getElementById('resultado-pe');
+
+                    const margenContribucion = precio - variable;
+
+                    if (margenContribucion <= 0) {
+                        resultadoPE.innerHTML = `<span class="negative">Error: El precio debe ser mayor al costo variable.</span>`;
+                    } else if (fijos <= 0) {
+                        resultadoPE.innerHTML = `<span class="negative">Ingresa los costos fijos.</span>`;
+                    } else {
+                        const unidadesPE = fijos / margenContribucion;
+                        resultadoPE.innerHTML = `Necesitas vender <strong>${unidadesPE.toFixed(2)} unidades</strong> para cubrir costos.`;
+                    }
+                });
+            }
+
+            // --- LÓGICA DE LA CALCULADORA DE VAN ---
+            const btnVAN = document.getElementById('btn-van');
+            if (btnVAN) {
+                btnVAN.addEventListener('click', function() {
+                    const inversion = parseFloat(document.getElementById('inversion').value) || 0;
+                    const tasa = (parseFloat(document.getElementById('tasa').value) || 0) / 100; // Convertir % a decimal
+                    const resultadoVAN = document.getElementById('resultado-van');
+                    
+                    const flujos = [
+                        parseFloat(document.getElementById('flujo1').value) || 0,
+                        parseFloat(document.getElementById('flujo2').value) || 0,
+                        parseFloat(document.getElementById('flujo3').value) || 0,
+                        parseFloat(document.getElementById('flujo4').value) || 0,
+                        parseFloat(document.getElementById('flujo5').value) || 0
+                    ];
+
+                    if (inversion <= 0 || tasa <= 0) {
+                        resultadoVAN.innerHTML = `<span class="negative">Ingresa la Inversión y la Tasa.</span>`;
+                        return;
+                    }
+
+                    let sumFlujosDescontados = 0;
+                    for (let t = 0; t < flujos.length; t++) {
+                        sumFlujosDescontados += flujos[t] / Math.pow(1 + tasa, t + 1);
+                    }
+
+                    const van = sumFlujosDescontados - inversion;
+                    
+                    const formatoMoneda = new Intl.NumberFormat('es-GT', { style: 'currency', currency: 'GTQ' });
+
+                    if (van > 0) {
+                        resultadoVAN.innerHTML = `VAN: <strong class="positive">${formatoMoneda.format(van)}</strong><br>(Se aprueba el proyecto)`;
+                    } else {
+                        resultadoVAN.innerHTML = `VAN: <strong class="negative">${formatoMoneda.format(van)}</strong><br>(Se rechaza el proyecto)`;
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>
